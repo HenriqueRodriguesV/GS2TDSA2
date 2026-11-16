@@ -3,6 +3,7 @@ package org.fiap.gs_final.service;
 import org.fiap.gs_final.dto.LocalSeguroRequestDTO;
 import org.fiap.gs_final.model.LocalSeguro;
 import org.fiap.gs_final.repository.LocalSeguroRepository;
+import org.fiap.gs_final.repository.OrientacaoRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -13,8 +14,12 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class LocalSeguroService {
     private final LocalSeguroRepository repository;
+    private final OrientacaoRepository orientacoes;
 
-    public LocalSeguroService(LocalSeguroRepository repository) { this.repository = repository; }
+    public LocalSeguroService(LocalSeguroRepository repository, OrientacaoRepository orientacoes) {
+        this.repository = repository;
+        this.orientacoes = orientacoes;
+    }
 
     @Transactional
     public LocalSeguro criar(LocalSeguroRequestDTO dto) {
@@ -41,6 +46,11 @@ public class LocalSeguroService {
         return repository.save(local);
     }
 
+    /** Orientações antigas que citavam o local continuam salvas, só perdem o vínculo com ele. */
     @Transactional
-    public void excluir(Long id) { repository.delete(buscar(id)); }
+    public void excluir(Long id) {
+        LocalSeguro local = buscar(id);
+        orientacoes.desvincularLocal(local.getId());
+        repository.delete(local);
+    }
 }

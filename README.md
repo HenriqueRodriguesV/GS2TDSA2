@@ -14,16 +14,37 @@ O front usa Firebase Authentication para cadastro e login. A API valida o ID tok
 | Validação do token e perfil `CIDADAO`/`GESTOR` | API Java com Spring Security |
 | Locais seguros, ocorrências e pontos de risco | API Java + H2 |
 | Orientações personalizadas | API Java + Spring AI/Gemini (com alternativa local) |
+| Geração assíncrona das orientações | RabbitMQ (evento `OcorrenciaRegistrada`) |
+
+**Repositório Mobile (app que consome esta API):** _adicionar o link do repositório do app_
 
 O front não precisa guardar senha na API nem fazer um segundo login. Depois do login Firebase, envia o ID token no header `Authorization: Bearer <token>`.
 
 ## Executar localmente
 
-Requisitos: **JDK 21**. Na raiz do projeto, execute no PowerShell:
+Requisitos: **JDK 21** e **Docker** (para o RabbitMQ).
+
+1. Suba o RabbitMQ:
+
+```bash
+docker compose up -d
+```
+
+2. Inicie a API.
+
+Linux ou macOS:
+
+```bash
+./mvnw spring-boot:run
+```
+
+Windows (PowerShell):
 
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
+
+Sem o RabbitMQ a API também sobe: as ocorrências são registradas normalmente, só a orientação automática não é gerada (ela continua disponível sob demanda em `POST /api/ai/ocorrencias/{id}/orientacao`).
 
 Se o Java 21 não estiver como padrão, ajuste `JAVA_HOME` antes de iniciar:
 
@@ -40,6 +61,7 @@ Quando o log indicar que a aplicação iniciou, os endereços locais são:
 | Swagger UI | http://localhost:8080/swagger-ui/index.html |
 | Definição OpenAPI | http://localhost:8080/v3/api-docs |
 | Console H2 (desenvolvimento) | http://localhost:8080/h2-console |
+| Painel do RabbitMQ | http://localhost:15672 (usuário `guest`, senha `guest`) |
 
 No console H2, use JDBC URL `jdbc:h2:file:./data/refugio360;AUTO_SERVER=TRUE`, usuário `sa` e senha vazia. Os dados ficam na pasta `data/` e persistem entre reinicializações.
 
@@ -57,6 +79,8 @@ A aplicação inicia localmente sem Firebase ou chave Gemini. Defina as variáve
 | `GESTOR_EMAIL` | E-mail do gestor inicial | `gestor@refugio360.local` |
 | `GESTOR_PASSWORD` | Senha local do gestor inicial | `gestor12345` |
 | `JWT_SECRET` | Chave dos JWTs locais; use segredo aleatório com pelo menos 32 bytes fora do desenvolvimento | valor de desenvolvimento |
+| `RABBITMQ_HOST` / `RABBITMQ_PORT` | Endereço do RabbitMQ | `localhost` / `5672` |
+| `RABBITMQ_USERNAME` / `RABBITMQ_PASSWORD` | Credenciais do RabbitMQ | `guest` / `guest` |
 
 Exemplo no PowerShell:
 
@@ -78,12 +102,13 @@ O `FIREBASE_PROJECT_ID` precisa ser o mesmo configurado no app. O valor de CORS 
 3. Na primeira entrada, chama `POST /api/auth/firebase` com o token no header. A API cria o perfil local como `CIDADAO`, ou vincula um cadastro de gestor previamente configurado.
 4. Nas próximas chamadas protegidas, envia o ID token Firebase no mesmo header.
 
-Exemplo em JavaScript:
+Exemplo no app (React Native + Expo):
 
-```js
+```ts
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+// Defina EXPO_PUBLIC_API_URL no .env do app. No celular, use o IP da máquina, não "localhost".
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8080";
 const { user } = await signInWithEmailAndPassword(getAuth(), email, senha);
 const idToken = await user.getIdToken();
 
@@ -97,7 +122,7 @@ const perfil = await resposta.json(); // { email, papel, firebaseUid }
 
 Para chamar uma rota protegida depois do vínculo:
 
-```js
+```ts
 const token = await user.getIdToken();
 const resposta = await fetch(`${API_URL}/api/ocorrencias?page=0&size=10`, {
   headers: { Authorization: `Bearer ${token}` },
@@ -137,7 +162,7 @@ A resposta contém `accessToken`, `tokenType`, `expiresAt`, `email`, `papel` e `
 | Criar, editar e excluir locais seguros e pontos de risco | `GESTOR` |
 | Criar e consultar ocorrências | `CIDADAO` ou `GESTOR` |
 | Editar, excluir ou atualizar status de ocorrência | `GESTOR` |
-| Gerar orientação para uma ocorrência | `CIDADAO` ou `GESTOR` |
+| Ver ou gerar orientação de uma ocorrência | Autor da ocorrência ou `GESTOR` |
 | Consultar o próprio perfil (`/api/auth/me`) | Usuário autenticado |
 
 ## Endpoints
@@ -153,10 +178,12 @@ Todos os `GET` de coleção aceitam paginação Spring Data. Os parâmetros padr
 | Locais seguros | `GET /api/locais-seguros`, `GET /api/locais-seguros/{id}` | Público |
 | Locais seguros | `POST /api/locais-seguros`, `PUT /api/locais-seguros/{id}`, `DELETE /api/locais-seguros/{id}` | `GESTOR` |
 | Ocorrências | `GET /api/ocorrencias`, `GET /api/ocorrencias/{id}`, `POST /api/ocorrencias` | Autenticado |
+| Ocorrências | `GET /api/ocorrencias/minhas` | Autenticado; só as do próprio usuário |
+| Ocorrências | `GET /api/ocorrencias/{id}/orientacoes` | Autor ou `GESTOR` |
 | Ocorrências | `PUT /api/ocorrencias/{id}`, `PATCH /api/ocorrencias/{id}/status`, `DELETE /api/ocorrencias/{id}` | `GESTOR` |
 | Pontos de risco | `GET /api/pontos-risco`, `GET /api/pontos-risco/{id}` | Público |
 | Pontos de risco | `POST /api/pontos-risco`, `PUT /api/pontos-risco/{id}`, `DELETE /api/pontos-risco/{id}` | `GESTOR` |
-| IA | `POST /api/ai/ocorrencias/{id}/orientacao?perfil=idoso` | `CIDADAO` ou `GESTOR` |
+| IA | `POST /api/ai/ocorrencias/{id}/orientacao?perfil=IDOSO` | Autor ou `GESTOR` |
 
 ### Exemplos de corpos
 
@@ -180,9 +207,12 @@ Registrar ocorrência (`POST /api/ocorrencias`, cidadão ou gestor):
   "descricao": "Alagamento na avenida",
   "urgencia": "ALTA",
   "latitude": -23.55,
-  "longitude": -46.63
+  "longitude": -46.63,
+  "perfil": "IDOSO"
 }
 ```
+
+`perfil` é opcional (`GERAL`, `IDOSO`, `PCD` ou `FAMILIA`) e define para quem a orientação automática é escrita.
 
 Atualizar status (`PATCH /api/ocorrencias/{id}/status`, gestor):
 
@@ -201,11 +231,29 @@ Criar ponto de risco (`POST /api/pontos-risco`, gestor):
 }
 ```
 
+O status segue um ciclo fixo: `PENDENTE` → `EM_ANALISE` → `RESOLVIDA` (também é possível resolver direto de `PENDENTE`, ou devolver `EM_ANALISE` para `PENDENTE`). Uma ocorrência `RESOLVIDA` não reabre; qualquer outra transição retorna `409`.
+
 Urgências aceitas para ocorrências: `BAIXA`, `MEDIA`, `ALTA` e `CRITICA`. Níveis de perigo aceitos: `BAIXO`, `MODERADO`, `ALTO` e `CRITICO`. Latitude e longitude devem estar dentro dos limites geográficos válidos.
 
-## Orientações com IA
+## Orientações com IA e RabbitMQ
 
-`POST /api/ai/ocorrencias/{id}/orientacao?perfil=idoso` usa o relato e a urgência da ocorrência, além de até três locais seguros cadastrados mais próximos. O parâmetro `perfil` é opcional e pode adaptar o texto ao público, por exemplo `idoso`, `pcd` ou `familia`.
+O cidadão não precisa pedir a orientação: ela é gerada assim que o relato é registrado, sem travar a resposta do app.
+
+```text
+App ──POST /api/ocorrencias──▶ API grava a ocorrência ──(após o commit)──▶ RabbitMQ
+                                                                            │  exchange refugio360.eventos
+                                                                            │  fila refugio360.ocorrencias.orientacao
+                                                                            ▼
+                                     OrientacaoListener ──▶ Spring AI (Gemini) ──▶ grava a Orientacao
+App ──GET /api/ocorrencias/{id}/orientacoes──▶ lê a orientação gerada
+```
+
+1. `POST /api/ocorrencias` grava o relato ligado ao autor e devolve `201` na hora.
+2. Depois do commit, a API publica o evento `OcorrenciaRegistrada` no RabbitMQ.
+3. O consumidor (`OrientacaoListener`) chama o Spring AI com o relato, a urgência, o perfil e os três locais seguros mais próximos, e grava o resultado na entidade `Orientacao`.
+4. O app busca a orientação em `GET /api/ocorrencias/{id}/orientacoes`.
+
+`POST /api/ai/ocorrencias/{id}/orientacao?perfil=IDOSO` gera uma nova orientação na hora, por exemplo para outro público. O texto muda conforme o perfil: frases curtas e passos numerados para `IDOSO`, trajetos acessíveis para `PCD` e cuidados com crianças para `FAMILIA`.
 
 Com `GEMINI_API_KEY` configurada, a resposta pode ser gerada pelo Gemini. Sem chave ou se o provedor estiver indisponível, a API retorna uma orientação local e informa `geradoPorIA: false`. A resposta também inclui `locaisConsiderados` com os IDs dos locais usados como contexto. A IA não confirma horário, capacidade ou disponibilidade dos locais; valide essas informações antes do deslocamento.
 
@@ -246,8 +294,19 @@ src/main/java/org/fiap/gs_final/
   security/    Firebase, JWT local, perfis e CORS
   exception/   formato global de erros da API
   ai/          geração de orientações com Spring AI
+  mensageria/  RabbitMQ: evento, publicação e consumidor
   config/      Swagger/OpenAPI e paginação
 ```
+
+## Modelo de dados
+
+| Entidade | Relacionamentos |
+|---|---|
+| `Usuario` | autor de várias `Ocorrencia` |
+| `Ocorrencia` | `@ManyToOne` autor (`Usuario`); `@OneToMany` orientações (removidas junto) |
+| `Orientacao` | `@ManyToOne` ocorrência; `@ManyToMany` locais seguros considerados |
+| `LocalSeguro` | citado por várias `Orientacao` |
+| `PontoRisco` | áreas de risco cadastradas pelo gestor |
 
 ## Equipe
 
@@ -259,4 +318,4 @@ src/main/java/org/fiap/gs_final/
 
 ## Tecnologias
 
-Java 21 · Spring Boot 3.4 · Spring Web · Spring Security · Spring Data JPA · H2 · Spring AI · Gemini · Firebase Authentication · Swagger/OpenAPI · Maven
+Java 21 · Spring Boot 3.4 · Spring Web · Spring Security · Spring Data JPA · H2 · Spring AI · Gemini · RabbitMQ (Spring AMQP) · Docker Compose · Firebase Authentication · Swagger/OpenAPI · Maven

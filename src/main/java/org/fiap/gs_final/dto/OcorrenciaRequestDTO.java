@@ -14,5 +14,9 @@ public record OcorrenciaRequestDTO(
         @Pattern(regexp = "(?i)BAIXA|MEDIA|ALTA|CRITICA", message = "Use BAIXA, MEDIA, ALTA ou CRITICA")
         String urgencia,
         @NotNull(message = "A latitude é obrigatória") @DecimalMin("-90.0") @DecimalMax("90.0") Double latitude,
-        @NotNull(message = "A longitude é obrigatória") @DecimalMin("-180.0") @DecimalMax("180.0") Double longitude
+        @NotNull(message = "A longitude é obrigatória") @DecimalMin("-180.0") @DecimalMax("180.0") Double longitude,
+
+        /* Opcional: para quem a orientação da IA deve ser escrita. */
+        @Pattern(regexp = "(?i)GERAL|IDOSO|PCD|FAMILIA", message = "Use GERAL, IDOSO, PCD ou FAMILIA")
+        String perfil
 ) {}
