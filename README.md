@@ -4,6 +4,13 @@ API REST do **Refúgio 360**, solução CitizenTech para apoiar comunidades dura
 
 O projeto foi organizado no estilo do OlliPet: este README explica onde cada responsabilidade fica, como o app se autentica, quais rotas existem e como executar a API localmente.
 
+## Links:
+| Tipo | Endereço |
+|---|---|
+| Swagger UI on Render | https://java-refugio360.onrender.com/swagger-ui/index.html |
+| Deploy on Render (web service) | https://java-refugio360.onrender.com |
+| Vídeo Pitch | http://localhost:8080/h2-console |
+
 ## Como os dados e a autenticação funcionam
 
 O front usa Firebase Authentication para cadastro e login. A API valida o ID token emitido pelo Firebase e mantém no H2 o perfil do usuário e os dados do domínio.
