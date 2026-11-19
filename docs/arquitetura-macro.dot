@@ -1,0 +1,54 @@
+digraph G {
+  rankdir=LR; splines=spline; nodesep=0.5; ranksep=0.75; pad=0.35; newrank=true;
+  graph [fontname="DejaVu Sans", fontsize=14, labelloc=t, label="Refugio 360 - Arquitetura macro e fluxo CI/CD (GS 2026/2 - DevOps Tools & Cloud Computing - GS The Last Dance)\n\n"];
+  node  [fontname="DejaVu Sans", fontsize=11, shape=box, style="rounded,filled", fillcolor="#ffffff", color="#555555", margin="0.18,0.10"];
+  edge  [fontname="DejaVu Sans", fontsize=10, color="#555555"];
+
+  dev [label="Desenvolvedor\n(equipe GS The Last Dance)", shape=ellipse, fillcolor="#fff2cc", color="#bf9000"];
+
+  subgraph cluster_ado { label="Azure DevOps - organizacao gs-the-last-dance / projeto Refugio360"; style="rounded"; color="#0078d4"; fontcolor="#0078d4";
+    boards [label="Azure Boards\nTask vinculada a\nbranch, commits e PR", fillcolor="#dbe9f9"];
+    repos  [label="Azure Repos (Git)\nbranch feature/* -> PR -> main\nmain protegida (revisor + work item)", fillcolor="#dbe9f9"];
+    ci     [label="Pipeline de Build (CI)\nazure-pipeline.yml\nMaven + testes JUnit", fillcolor="#dbe9f9"];
+    art    [label="Artefato \"drop\"\n.jar + script-bd.sql\n+ resultados dos testes", fillcolor="#dbe9f9"];
+    cd     [label="Pipeline de Release (CD)\nRefugio360-CD\nscript-bd.sql + deploy", fillcolor="#dbe9f9"];
+    vg     [label="Variable Group\nrefugio360-cloud\n(segredos)", shape=note, fillcolor="#fde9d9", color="#c0504d"];
+  }
+
+  subgraph cluster_az { label="Microsoft Azure - rg-refugio360-rm562917"; labelloc=b; style="rounded"; color="#005a9e"; fontcolor="#005a9e";
+    web [label="Azure App Service\nWeb App Linux Java 21\nrefugio360-api-rm562917\n(API Spring Boot, perfil cloud)", fillcolor="#cfe8fc"];
+    aznote [label="Regiao Mexico Central\nrecursos criados por\nscripts/provisionar-azure.sh", shape=plaintext, style="", fontsize=9, fontcolor="#005a9e"];
+    sql [label="Azure SQL Database\nsql-refugio360-rm562917\nbanco refugio360", shape=cylinder, fillcolor="#cfe8fc"];
+  }
+
+  subgraph cluster_ext { label="Servicos externos (opcionais)"; style="rounded,dashed"; color="#8a8a8a"; fontcolor="#6a6a6a";
+    fb  [label="Firebase Authentication\n(login do app)", fillcolor="#f2f2f2"];
+    ai  [label="Gemini via Spring AI\n(orientacoes)", fillcolor="#f2f2f2"];
+  }
+
+  user [label="Cidadao / Gestor\n(app mobile ou Swagger)", shape=ellipse, fillcolor="#fff2cc", color="#bf9000"];
+
+  dev    -> boards [label="1. cria a Task"];
+  dev    -> repos  [label="2. branch + commit\n3. Pull Request"];
+  boards -> repos  [dir=both, style=dashed, label="vinculos", color="#0078d4", fontcolor="#0078d4"];
+  repos  -> ci     [label="4. merge na main\ndispara o CI", color="#0078d4", fontcolor="#0078d4"];
+  ci     -> art    [label="5. publica", color="#0078d4", fontcolor="#0078d4"];
+  art    -> cd     [label="6. novo artefato\ndispara a Release", color="#0078d4", fontcolor="#0078d4"];
+  vg     -> cd     [label="credenciais", style=dashed, color="#c0504d", fontcolor="#c0504d"];
+  cd     -> sql    [xlabel="7. aplica script-bd.sql", color="#005a9e", fontcolor="#005a9e"];
+  cd     -> web    [label="8. deploy do .jar\n+ App Settings", color="#005a9e", fontcolor="#005a9e"];
+  web    -> sql    [label="9. JDBC/TLS", color="#005a9e", fontcolor="#005a9e"];
+  user   -> web    [label="HTTPS /api/**", color="#bf9000", fontcolor="#bf9000"];
+  web    -> fb     [label="valida token", style=dashed, color="#8a8a8a"];
+  web    -> ai     [label="gera orientacao", style=dashed, color="#8a8a8a"];
+
+  subgraph cluster_leg { label="Legenda"; style="rounded"; color="#999999"; fontcolor="#333333"; fontsize=12;
+    l1 [label="Persona", shape=ellipse, fillcolor="#fff2cc", color="#bf9000", fontsize=10];
+    l2 [label="Ferramenta Azure DevOps", fillcolor="#dbe9f9", fontsize=10];
+    l3 [label="Recurso na Azure", fillcolor="#cfe8fc", fontsize=10];
+    l4 [label="Segredo protegido", shape=note, fillcolor="#fde9d9", color="#c0504d", fontsize=10];
+    l5 [label="Servico externo opcional", fillcolor="#f2f2f2", fontsize=10];
+    l6 [label="Seta azul = fluxo CI/CD numerado\nTracejado = vinculo/credencial/opcional", shape=plaintext, style="", fontsize=10];
+    l1 -> l2 -> l3 -> l4 -> l5 -> l6 [style=invis];
+  }
+}

@@ -1,0 +1,82 @@
+# =============================================================================
+# Refugio 360 - Pipeline de Build (CI) - Global Solution 2026/2 - DevOps
+# =============================================================================
+# Fluxo:
+#   PR aprovado e "Complete" na main  ->  esta pipeline roda sozinha:
+#     1. Maven: compila e executa os testes automatizados (JUnit)
+#     2. Publica os resultados dos testes (aba Tests) no Azure DevOps
+#     3. Empacota o .jar da API + scripts/script-bd.sql
+#     4. Publica o artefato "drop"
+#   A pipeline de Release "Refugio360-CD" dispara automaticamente quando um
+#   novo artefato e publicado: aplica o script-bd.sql no Azure SQL e faz o
+#   deploy do .jar no Azure Web App.
+#
+# A main e protegida (PR obrigatorio): nao ha push direto, entao o CI so roda
+# depois do merge de um Pull Request na main.
+# =============================================================================
+
+trigger:
+  branches:
+    include:
+      - main
+
+# Nao roda build de validacao em PR: o Build acontece somente apos o merge na main.
+pr: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # Variaveis de ambiente usadas pelas tasks (sem dados sensiveis).
+  - name: javaHome
+    value: '$(JAVA_HOME_21_X64)'
+  - name: mavenOpts
+    value: '-Xmx1024m'
+  - name: artifactName
+    value: 'drop'
+  - name: jarName
+    value: 'gs-final-java-0.0.1-SNAPSHOT.jar'
+
+stages:
+  - stage: Build
+    displayName: 'CI - Build, testes e artefato'
+    jobs:
+      - job: BuildTest
+        displayName: 'Maven: compilar, testar e empacotar'
+        steps:
+          - task: Maven@4
+            displayName: 'mvn clean package (compila e executa os testes JUnit)'
+            inputs:
+              mavenPomFile: 'pom.xml'
+              goals: 'clean package'
+              options: '-B'
+              mavenOptions: '$(mavenOpts)'
+              javaHomeOption: 'Path'
+              jdkDirectory: '$(javaHome)'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              testRunTitle: 'Testes automatizados - Refugio 360 API'
+            env:
+              # O CI usa o H2 em memoria: os testes nunca tocam o banco de producao.
+              SPRING_PROFILES_ACTIVE: 'default'
+
+          - task: CopyFiles@2
+            displayName: 'Copiar o .jar da API para o pacote'
+            inputs:
+              sourceFolder: '$(System.DefaultWorkingDirectory)/target'
+              contents: '$(jarName)'
+              targetFolder: '$(Build.ArtifactStagingDirectory)/app'
+
+          - task: CopyFiles@2
+            displayName: 'Copiar scripts/script-bd.sql (DDL do Azure SQL) para o pacote'
+            inputs:
+              sourceFolder: '$(System.DefaultWorkingDirectory)/scripts'
+              contents: 'script-bd.sql'
+              targetFolder: '$(Build.ArtifactStagingDirectory)/sql'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publicar artefato "drop" (jar + script-bd.sql)'
+            inputs:
+              pathToPublish: '$(Build.ArtifactStagingDirectory)'
+              artifactName: '$(artifactName)'
+              publishLocation: 'Container'
