@@ -71,7 +71,16 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    @Bean SecretKey jwtSecretKey(@Value("${app.jwt.secret}") String secret) {
+    @Bean SecretKey jwtSecretKey(@Value("${app.jwt.secret:}") String secret) {
+        if (secret == null || secret.isBlank()) {
+            // Sem JWT_SECRET (somente desenvolvimento local): chave aleatoria valida ate a API reiniciar.
+            // Na nuvem o perfil "cloud" exige a variavel JWT_SECRET, vinda do Variable Group secreto.
+            byte[] aleatoria = new byte[32];
+            new java.security.SecureRandom().nextBytes(aleatoria);
+            org.slf4j.LoggerFactory.getLogger(SecurityConfig.class)
+                    .warn("JWT_SECRET nao definida: usando chave temporaria (somente desenvolvimento local).");
+            return new SecretKeySpec(aleatoria, "HmacSHA256");
+        }
         byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
         if (bytes.length < 32) throw new IllegalStateException("app.jwt.secret deve conter ao menos 32 bytes");
         return new SecretKeySpec(bytes, "HmacSHA256");
