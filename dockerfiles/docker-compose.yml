@@ -1,0 +1,14 @@
+# RabbitMQ para desenvolvimento local (orientacao assincrona). Painel em http://localhost:15672 (guest/guest).
+# Uso, a partir da raiz: docker compose -f dockerfiles/docker-compose.yml up -d
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: refugio360-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
