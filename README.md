@@ -1,4 +1,4 @@
-# Refúgio 360 — API na nuvem com Azure DevOps
+# Refúgio 360: API na nuvem com Azure DevOps
 
 **Global Solution 2026/2 · CitizenTech · DevOps Tools & Cloud Computing · Grupo GS The Last Dance**
 
@@ -13,10 +13,10 @@ e **Azure Pipelines** (Build + Release). A infraestrutura é criada por **script
 | **Projeto (privado, Git)** | https://dev.azure.com/gs-the-last-dance/Refugio360 |
 | **Azure Repos** | https://dev.azure.com/gs-the-last-dance/Refugio360/_git/Refugio360 |
 | **API publicada (Swagger)** | https://refugio360-api-rm562917.azurewebsites.net/swagger-ui/index.html |
-| **Vídeo de demonstração** | link do YouTube no PDF de entrega (`GSTheLastDance_rm562917.pdf`) |
+| **Vídeo de demonstração (YouTube)** | https://youtu.be/bQmMK43ok2o |
 | **Repositório da API Java (origem)** | https://github.com/Last-Global-Solution/java-refugio360 |
 
-## Integrantes — GS The Last Dance
+## Integrantes (GS The Last Dance)
 
 | Nome completo | RM | Turma |
 |---|---|---|
@@ -147,7 +147,7 @@ A assinatura Azure for Students só libera as regiões `mexicocentral`, `chilece
 
 ---
 
-## 5. Banco de dados — Azure SQL Database
+## 5. Banco de dados: Azure SQL Database
 
 O DDL está em [`scripts/script-bd.sql`](scripts/script-bd.sql):
 
@@ -169,7 +169,7 @@ A Release executa o script a cada deploy. Na nuvem, o Hibernate roda com
 
 ---
 
-## 6. Azure DevOps — Boards, Repos e políticas
+## 6. Azure DevOps: Boards, Repos e políticas
 
 - **Projeto:** `Refugio360`, **privado**, versionamento **Git**, processo **Scrum**.
 - **Acesso do professor:** Basic na organização e **Project Administrators** no projeto.
@@ -190,7 +190,7 @@ A Release executa o script a cada deploy. Na nuvem, o Hibernate roda com
 
 ## 7. Azure Pipelines
 
-### 7.1 Build (CI) — [`azure-pipeline.yml`](azure-pipeline.yml)
+### 7.1 Build (CI): [`azure-pipeline.yml`](azure-pipeline.yml)
 
 Dispara **automaticamente a cada commit na `main`**, ou seja, a cada merge de PR.
 
@@ -204,7 +204,7 @@ Dispara **automaticamente a cada commit na `main`**, ou seja, a cada merge de PR
 Os testes ficam em `src/test/java`: carga do contexto Spring, ciclo de status da ocorrência e
 validação dos dados de locais seguros e pontos de risco.
 
-### 7.2 Release (CD) — `Refugio360-CD`
+### 7.2 Release (CD): `Refugio360-CD`
 
 Pipeline de Release com **gatilho de implantação contínua**: roda **automaticamente quando o CI
 publica um novo artefato** da `main`. Stage **Produção**:
@@ -229,7 +229,7 @@ Nenhuma senha está no código: o perfil `cloud` (`application-cloud.properties`
 
 ---
 
-## 8. CRUD — JSON de cada tabela
+## 8. CRUD: JSON de cada tabela
 
 Base: `https://refugio360-api-rm562917.azurewebsites.net`.
 O Swagger está em `/swagger-ui/index.html`.
@@ -246,11 +246,11 @@ Content-Type: application/json
 ```
 
 A resposta traz `accessToken`; envie-o como `Authorization: Bearer <accessToken>`.
-No Swagger, use o botão **Authorize**.
+No Swagger, clique em **Authorize** e cole o `accessToken`: o token passa a ser enviado em todas as rotas protegidas.
 
-### 8.1 `tb_local_seguro` — `/api/locais-seguros`
+### 8.1 `tb_local_seguro`: `/api/locais-seguros`
 
-**Create** — `POST /api/locais-seguros` → `201`
+**Create:** `POST /api/locais-seguros` → `201`
 ```json
 {
   "nome": "Abrigo Central",
@@ -262,9 +262,9 @@ No Swagger, use o botão **Authorize**.
 }
 ```
 
-**Read** — `GET /api/locais-seguros/{id}` → `200` (lista: `GET /api/locais-seguros?page=0&size=10`)
+**Read:** `GET /api/locais-seguros/{id}` → `200` (lista: `GET /api/locais-seguros?page=0&size=10`)
 
-**Update** — `PUT /api/locais-seguros/{id}` → `200`
+**Update:** `PUT /api/locais-seguros/{id}` → `200`
 ```json
 {
   "nome": "Abrigo Central Atualizado",
@@ -276,16 +276,16 @@ No Swagger, use o botão **Authorize**.
 }
 ```
 
-**Delete** — `DELETE /api/locais-seguros/{id}` → `204`
+**Delete:** `DELETE /api/locais-seguros/{id}` → `204`
 
 **Conferência no banco:**
 ```sql
 SELECT id, nome, tipo, endereco, descricao FROM dbo.tb_local_seguro ORDER BY id DESC;
 ```
 
-### 8.2 `tb_ponto_risco` — `/api/pontos-risco`
+### 8.2 `tb_ponto_risco`: `/api/pontos-risco`
 
-**Create** — `POST /api/pontos-risco` → `201`
+**Create:** `POST /api/pontos-risco` → `201`
 ```json
 {
   "titulo": "Area sujeita a alagamento",
@@ -295,9 +295,9 @@ SELECT id, nome, tipo, endereco, descricao FROM dbo.tb_local_seguro ORDER BY id 
 }
 ```
 
-**Read** — `GET /api/pontos-risco/{id}` → `200`
+**Read:** `GET /api/pontos-risco/{id}` → `200`
 
-**Update** — `PUT /api/pontos-risco/{id}` → `200`
+**Update:** `PUT /api/pontos-risco/{id}` → `200`
 ```json
 {
   "titulo": "Area sujeita a alagamento severo",
@@ -307,16 +307,16 @@ SELECT id, nome, tipo, endereco, descricao FROM dbo.tb_local_seguro ORDER BY id 
 }
 ```
 
-**Delete** — `DELETE /api/pontos-risco/{id}` → `204`
+**Delete:** `DELETE /api/pontos-risco/{id}` → `204`
 
 **Conferência no banco:**
 ```sql
 SELECT id, titulo, nivel_perigo, latitude, longitude FROM dbo.tb_ponto_risco ORDER BY id DESC;
 ```
 
-### 8.3 `tb_ocorrencia` — `/api/ocorrencias`
+### 8.3 `tb_ocorrencia`: `/api/ocorrencias`
 
-**Create** — `POST /api/ocorrencias` (cidadão ou gestor) → `201`
+**Create:** `POST /api/ocorrencias` (cidadão ou gestor) → `201`
 ```json
 {
   "descricao": "Alagamento na avenida",
@@ -327,15 +327,15 @@ SELECT id, titulo, nivel_perigo, latitude, longitude FROM dbo.tb_ponto_risco ORD
 }
 ```
 
-**Read** — `GET /api/ocorrencias/{id}` → `200`
+**Read:** `GET /api/ocorrencias/{id}` → `200`
 
-**Update** — `PUT /api/ocorrencias/{id}` (gestor), com o mesmo formato do Create → `200`; ou só o status:
+**Update:** `PUT /api/ocorrencias/{id}` (gestor), com o mesmo formato do Create → `200`; ou só o status:
 `PATCH /api/ocorrencias/{id}/status`
 ```json
 { "status": "EM_ANALISE" }
 ```
 
-**Delete** — `DELETE /api/ocorrencias/{id}` (gestor) → `204`
+**Delete:** `DELETE /api/ocorrencias/{id}` (gestor) → `204`
 
 **Conferência no banco:**
 ```sql
