@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @OpenAPIDefinition(info = @Info(
-        title = "Refugio 360 API - GS The Last Dance",
+        title = "Refugio 360 API",
         version = "1.1.0",
         description = "API do Refugio 360 publicada na Azure via Azure DevOps"))
 @SecurityScheme(name = "bearerAuth", type = SecuritySchemeType.HTTP, scheme = "bearer", bearerFormat = "JWT")
