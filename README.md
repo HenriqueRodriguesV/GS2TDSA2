@@ -1,201 +1,247 @@
-# Refúgio 360 — API
+# Refúgio 360 — API na nuvem com Azure DevOps
 
-API REST do **Refúgio 360**, solução CitizenTech para apoiar comunidades durante ondas de calor, enchentes e falta de energia. O serviço cadastra locais seguros, recebe ocorrências, mapeia pontos de risco e gera orientações contextualizadas para cidadãos e gestores.
+**Global Solution 2026/2 · CitizenTech · DevOps Tools & Cloud Computing · Grupo GS The Last Dance**
 
-O projeto foi organizado no estilo do OlliPet: este README explica onde cada responsabilidade fica, como o app se autentica, quais rotas existem e como executar a API localmente.
+API REST do **Refúgio 360**, solução CitizenTech para apoiar comunidades durante ondas de calor,
+enchentes e falta de energia. Nesta entrega, a API Java é publicada na **Azure** com banco
+**Azure SQL Database**, e todo o ciclo de vida usa o **Azure DevOps**: **Azure Boards**, **Azure Repos**
+e **Azure Pipelines** (Build + Release). A infraestrutura é criada por **scripts Azure CLI**.
 
-## Links:
-| Tipo | Endereço |
+| | |
 |---|---|
-| Swagger UI on Render | https://java-refugio360.onrender.com/swagger-ui/index.html |
-| Deploy on Render (web service) | https://java-refugio360.onrender.com |
-| Vídeo Pitch | http://localhost:8080/h2-console |
+| **Organização Azure DevOps** | https://dev.azure.com/gs-the-last-dance |
+| **Projeto (privado, Git)** | https://dev.azure.com/gs-the-last-dance/Refugio360 |
+| **Azure Repos** | https://dev.azure.com/gs-the-last-dance/Refugio360/_git/Refugio360 |
+| **API publicada (Swagger)** | https://refugio360-api-rm562917.azurewebsites.net/swagger-ui/index.html |
+| **Vídeo de demonstração** | _adicionar o link do YouTube_ |
+| **Repositório da API Java (origem)** | https://github.com/Last-Global-Solution/java-refugio360 |
 
-## Como os dados e a autenticação funcionam
+## Integrantes — GS The Last Dance
 
-O front usa Firebase Authentication para cadastro e login. A API valida o ID token emitido pelo Firebase e mantém no H2 o perfil do usuário e os dados do domínio.
-
-| Responsabilidade | Onde fica |
-|---|---|
-| Cadastro e login no aplicativo | Firebase Authentication |
-| Validação do token e perfil `CIDADAO`/`GESTOR` | API Java com Spring Security |
-| Locais seguros, ocorrências e pontos de risco | API Java + H2 |
-| Orientações personalizadas | API Java + Spring AI/Gemini (com alternativa local) |
-| Geração assíncrona das orientações | RabbitMQ (evento `OcorrenciaRegistrada`) |
-
-**Repositório Mobile (app que consome esta API):** _adicionar o link do repositório do app_
-
-O front não precisa guardar senha na API nem fazer um segundo login. Depois do login Firebase, envia o ID token no header `Authorization: Bearer <token>`.
-
-## Executar localmente
-
-Requisitos: **JDK 21** e **Docker** (para o RabbitMQ).
-
-1. Suba o RabbitMQ:
-
-```bash
-docker compose up -d
-```
-
-2. Inicie a API.
-
-Linux ou macOS:
-
-```bash
-./mvnw spring-boot:run
-```
-
-Windows (PowerShell):
-
-```powershell
-.\mvnw.cmd spring-boot:run
-```
-
-Sem o RabbitMQ a API também sobe: as ocorrências são registradas normalmente, só a orientação automática não é gerada (ela continua disponível sob demanda em `POST /api/ai/ocorrencias/{id}/orientacao`).
-
-Se o Java 21 não estiver como padrão, ajuste `JAVA_HOME` antes de iniciar:
-
-```powershell
-$env:JAVA_HOME = 'C:\Program Files\Java\jdk-21'
-$env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
-.\mvnw.cmd spring-boot:run
-```
-
-Quando o log indicar que a aplicação iniciou, os endereços locais são:
-
-| Recurso | Endereço |
-|---|---|
-| Swagger UI | http://localhost:8080/swagger-ui/index.html |
-| Definição OpenAPI | http://localhost:8080/v3/api-docs |
-| Console H2 (desenvolvimento) | http://localhost:8080/h2-console |
-| Painel do RabbitMQ | http://localhost:15672 (usuário `guest`, senha `guest`) |
-
-No console H2, use JDBC URL `jdbc:h2:file:./data/refugio360;AUTO_SERVER=TRUE`, usuário `sa` e senha vazia. Os dados ficam na pasta `data/` e persistem entre reinicializações.
-
-## Configuração
-
-A aplicação inicia localmente sem Firebase ou chave Gemini. Defina as variáveis abaixo para integrar serviços externos e preparar outro ambiente:
-
-| Variável | Uso | Padrão local |
+| Nome completo | RM | Turma |
 |---|---|---|
-| `FIREBASE_PROJECT_ID` | ID do projeto Firebase que emite os tokens aceitos | vazio (Firebase desabilitado) |
-| `GEMINI_API_KEY` | Chave da API Gemini usada pelo Spring AI | sem chave (orientação alternativa) |
-| `GEMINI_MODEL` | Modelo Gemini | `gemini-2.5-flash` |
-| `CORS_ALLOWED_ORIGINS` | Origens do front, separadas por vírgula | `http://localhost:3000,http://localhost:5173,http://localhost:8081` |
-| `DATABASE_URL` | URL JDBC do banco | H2 em arquivo `./data/refugio360` |
-| `GESTOR_EMAIL` | E-mail do gestor inicial | `gestor@refugio360.local` |
-| `GESTOR_PASSWORD` | Senha local do gestor inicial | `gestor12345` |
-| `JWT_SECRET` | Chave dos JWTs locais; use segredo aleatório com pelo menos 32 bytes fora do desenvolvimento | valor de desenvolvimento |
-| `RABBITMQ_HOST` / `RABBITMQ_PORT` | Endereço do RabbitMQ | `localhost` / `5672` |
-| `RABBITMQ_USERNAME` / `RABBITMQ_PASSWORD` | Credenciais do RabbitMQ | `guest` / `guest` |
+| Gabriely Bonfim Silva | RM566242 | 2TDSA |
+| Mirelly Sousa Alves | RM566299 | 2TDSA |
+| Ruan Luca Feliciano de Carvalho | RM562218 | 2TDSA |
+| Murilo Macedo Silva | RM566462 | 2TDSA |
+| Henrique Rodrigues Vespasiano | RM562917 | 2TDSPW |
 
-Exemplo no PowerShell:
+---
 
-```powershell
-$env:FIREBASE_PROJECT_ID = 'id-do-projeto-firebase'
-$env:GEMINI_API_KEY = 'sua-chave-gemini'
-$env:CORS_ALLOWED_ORIGINS = 'http://localhost:3000,http://localhost:5173'
-.\mvnw.cmd spring-boot:run
+## 1. Solução proposta
+
+O cidadão encontra **locais seguros** (abrigos, UBS, pontos de água), consulta **pontos de risco**
+e registra **ocorrências** (alagamento, falta de energia, calor extremo). O gestor público mantém
+os locais e as áreas de risco e acompanha as ocorrências, que seguem o ciclo
+`PENDENTE → EM_ANALISE → RESOLVIDA`. Para cada ocorrência, a API gera uma **orientação**
+personalizada para o perfil do cidadão (idoso, PCD, família), considerando os locais seguros mais próximos.
+
+**Por que na nuvem com CI/CD:** a API precisa estar disponível justamente nos momentos de crise.
+Com o Azure Web App e o Azure SQL, ela fica acessível pela internet com HTTPS e banco gerenciado.
+Com as pipelines, cada mudança aprovada por Pull Request é compilada, testada e publicada
+automaticamente, sem deploy manual.
+
+**Stack:** Java 21 · Spring Boot 3.4 · Spring Security (JWT local + Firebase) · Spring Data JPA ·
+Hibernate · Bean Validation · springdoc-openapi (Swagger) · Spring AI (Gemini, opcional) ·
+RabbitMQ (opcional) · Maven · JUnit 5 · Azure SQL Database · Azure App Service · Azure CLI ·
+Azure DevOps (Boards, Repos, Pipelines).
+
+---
+
+## 2. Desenho macro da arquitetura
+
+![Arquitetura macro e fluxo CI/CD](docs/arquitetura-macro.png)
+
+**Fluxo, na ordem da numeração:**
+
+1. O desenvolvedor cria uma **Task** no Azure Boards.
+2. Cria uma **branch** a partir da Task e faz os **commits** no Azure Repos.
+3. Abre um **Pull Request** para a `main`. A política exige revisor e work item vinculado.
+4. O **merge do PR na `main`** dispara automaticamente a **pipeline de Build (CI)**.
+5. O CI compila, roda os **testes JUnit**, publica os resultados e o **artefato `drop`** (`.jar` + `script-bd.sql`).
+6. O **novo artefato** dispara automaticamente a **pipeline de Release (CD)**.
+7. A Release aplica o **`script-bd.sql`** no **Azure SQL Database**.
+8. A Release faz o **deploy do `.jar`** no **Azure Web App**, aplicando as configurações a partir de variáveis protegidas.
+9. A API conecta no Azure SQL via JDBC com TLS. O cidadão ou gestor usa a API por HTTPS.
+
+**Legenda do desenho:**
+
+| Elemento | Significado |
+|---|---|
+| Elipse amarela | Persona: desenvolvedor, cidadão ou gestor |
+| Caixa azul-clara | Ferramenta do Azure DevOps (Boards, Repos, Pipelines) |
+| Caixa azul | Recurso na Azure (Web App, Azure SQL) |
+| Nota vermelha | Segredo protegido (Variable Group) |
+| Caixa cinza tracejada | Serviço externo opcional (Firebase, Gemini) |
+| Seta azul numerada | Fluxo de CI/CD |
+| Linha tracejada | Vínculo, credencial ou integração opcional |
+
+| Componente | Recurso | Função |
+|---|---|---|
+| Azure Boards | Task (work item) | Planejamento e rastreabilidade: vínculo com branch, commits e PR |
+| Azure Repos | Repositório Git `Refugio360` | Código-fonte; `main` protegida por políticas |
+| Azure Pipelines (Build) | `azure-pipeline.yml` | CI: build Maven, testes JUnit e artefato |
+| Azure Pipelines (Release) | `Refugio360-CD` | CD: `script-bd.sql` no Azure SQL e deploy no Web App |
+| Variable Group | `refugio360-cloud` | URL, usuário e senha do banco; JWT e gestor inicial (secrets) |
+| Service Connection | `sc-refugio360-azure` | Acesso da Release à Azure (Workload Identity, escopo do Resource Group) |
+| Resource Group | `rg-refugio360-rm562917` | Agrupa os recursos (Mexico Central) |
+| Azure SQL Database | `sql-refugio360-rm562917` / `refugio360` | Banco relacional PaaS (Basic) |
+| App Service Plan | `plan-refugio360-rm562917` | Plano Linux B1 |
+| Web App | `refugio360-api-rm562917` | API Java 21, perfil `cloud` |
+
+---
+
+## 3. Estrutura do repositório
+
+```
+azure-pipeline.yml               pipeline de Build (CI) em YAML, na raiz
+scripts/
+  provisionar-azure.sh           cria toda a infraestrutura via Azure CLI
+  limpar-azure.sh                remove os recursos (após a avaliação)
+  script-bd.sql                  DDL do banco (Azure SQL), executado pela Release
+dockerfiles/
+  Dockerfile                     imagem da API (opcional; o deploy oficial é no Web App)
+  docker-compose.yml             RabbitMQ para desenvolvimento local
+docs/arquitetura-macro.png       desenho macro da arquitetura
+src/main/java/...                código da API (controller, service, repository, model...)
+src/main/resources/
+  application.properties         perfil local (H2)
+  application-cloud.properties   perfil de nuvem (Azure SQL; tudo por variável de ambiente)
+src/test/java/...                testes JUnit executados no CI
 ```
 
-O `FIREBASE_PROJECT_ID` precisa ser o mesmo configurado no app. O valor de CORS deve corresponder exatamente à origem usada pelo front.
+---
 
-## Autenticação
+## 4. Infraestrutura na Azure (Azure CLI)
 
-### Integração com Firebase (fluxo do aplicativo)
+Toda a infraestrutura é criada pelo script [`scripts/provisionar-azure.sh`](scripts/provisionar-azure.sh),
+no Azure Cloud Shell (Bash) ou em uma máquina com `az login`:
 
-1. O usuário cria a conta ou entra pelo Firebase Authentication.
-2. O front obtém o ID token atualizado com `user.getIdToken()`.
-3. Na primeira entrada, chama `POST /api/auth/firebase` com o token no header. A API cria o perfil local como `CIDADAO`, ou vincula um cadastro de gestor previamente configurado.
-4. Nas próximas chamadas protegidas, envia o ID token Firebase no mesmo header.
-
-Exemplo no app (React Native + Expo):
-
-```ts
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-
-// Defina EXPO_PUBLIC_API_URL no .env do app. No celular, use o IP da máquina, não "localhost".
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8080";
-const { user } = await signInWithEmailAndPassword(getAuth(), email, senha);
-const idToken = await user.getIdToken();
-
-const resposta = await fetch(`${API_URL}/api/auth/firebase`, {
-  method: "POST",
-  headers: { Authorization: `Bearer ${idToken}` },
-});
-if (!resposta.ok) throw new Error("Não foi possível vincular a conta à API");
-const perfil = await resposta.json(); // { email, papel, firebaseUid }
+```bash
+export SQL_ADMIN_PASSWORD='<senha-forte>'     # nunca versionar
+bash scripts/provisionar-azure.sh
 ```
 
-Para chamar uma rota protegida depois do vínculo:
+Ordem de criação:
 
-```ts
-const token = await user.getIdToken();
-const resposta = await fetch(`${API_URL}/api/ocorrencias?page=0&size=10`, {
-  headers: { Authorization: `Bearer ${token}` },
-});
-const pagina = await resposta.json();
-```
+1. Resource Group `rg-refugio360-rm562917`, na região `mexicocentral`.
+2. Azure SQL Server `sql-refugio360-rm562917`, com TLS 1.2 e firewall liberado para os serviços do Azure e para o IP de quem roda o script.
+3. Azure SQL Database `refugio360` (Basic, 2 GB).
+4. App Service Plan Linux B1 `plan-refugio360-rm562917`.
+5. Web App Java 21 `refugio360-api-rm562917`, com HTTPS obrigatório, Always On e perfil `cloud`.
 
-O papel não pode ser escolhido no app. Novos usuários Firebase viram `CIDADAO`. Para reconhecer um gestor pelo Firebase, configure `GESTOR_EMAIL` com o e-mail dele antes de iniciar a API; esse e-mail precisa estar verificado no Firebase. A senha inicial local não é utilizada no login pelo Firebase.
+O script não grava senhas no Web App: os segredos são aplicados pela pipeline de Release.
+Para remover tudo depois da avaliação, rode `bash scripts/limpar-azure.sh`.
 
-### Login local para Swagger e desenvolvimento
+A assinatura Azure for Students só libera as regiões `mexicocentral`, `chilecentral`,
+`eastus`, `southcentralus` e `northcentralus`. Para trocar, use `LOCATION=<região> bash scripts/provisionar-azure.sh`.
 
-Para testar sem configurar Firebase, a API oferece cadastro e login locais. O cadastro público sempre cria um `CIDADAO`:
+---
 
-```http
-POST /api/auth/register
-Content-Type: application/json
+## 5. Banco de dados — Azure SQL Database
 
-{"email":"ana@example.com","senha":"senha-com-8-ou-mais"}
-```
+O DDL está em [`scripts/script-bd.sql`](scripts/script-bd.sql):
 
-Faça login para receber um JWT local:
+- **gerado a partir das entidades JPA da API**, no dialeto do SQL Server;
+- **comentado**, explicando cada tabela;
+- **idempotente**: cada objeto só é criado se ainda não existir.
+
+A Release executa o script a cada deploy. Na nuvem, o Hibernate roda com
+`ddl-auto=validate`: ele só confere se o banco bate com as entidades e impede a API de subir se houver divergência.
+
+| Tabela | Conteúdo | CRUD na API |
+|---|---|---|
+| `tb_local_seguro` | abrigos, UBS, pontos de água | **sim** (`/api/locais-seguros`) |
+| `tb_ponto_risco` | áreas de risco | **sim** (`/api/pontos-risco`) |
+| `tb_ocorrencia` | relatos dos cidadãos (FK `tb_usuario`) | **sim** (`/api/ocorrencias`) |
+| `tb_usuario` | cidadãos e gestores | cadastro e login |
+| `tb_orientacao` | orientação de cada ocorrência (FK `tb_ocorrencia`) | gerada pela API |
+| `tb_orientacao_local` | N:N orientação × locais seguros | gerada pela API |
+
+---
+
+## 6. Azure DevOps — Boards, Repos e políticas
+
+- **Projeto:** `Refugio360`, **privado**, versionamento **Git**, processo **Scrum**.
+- **Acesso do professor:** Basic na organização e **Project Administrators** no projeto.
+- **Integrantes:** Contributors.
+- **Boards ↔ Repos:** cada Task é vinculada à **branch**, aos **commits** e ao **Pull Request**. Nos commits, a mensagem cita `#<id da Task>`.
+- **Políticas da branch `main`** (Repos → Branches → main → Branch policies):
+
+  | Política | Configuração |
+  |---|---|
+  | Require a minimum number of reviewers | 1 revisor; o autor pode aprovar o próprio PR (simulação permitida pelo enunciado) |
+  | Check for linked work items | **obrigatório** |
+  | Automatically included reviewers | **Henrique Rodrigues Vespasiano (RM562917)** como revisor padrão obrigatório |
+
+  Com essas políticas não há push direto na `main`. Toda mudança entra por Pull Request, e o
+  **Build só roda depois do merge na `main`** (o CI não tem gatilho de PR: `pr: none`).
+
+---
+
+## 7. Azure Pipelines
+
+### 7.1 Build (CI) — [`azure-pipeline.yml`](azure-pipeline.yml)
+
+Dispara **automaticamente a cada commit na `main`**, ou seja, a cada merge de PR.
+
+| Etapa (task) | O que faz |
+|---|---|
+| `Maven@4` | `mvn clean package`: compila e executa os **testes JUnit**; publica os resultados na aba **Tests** |
+| `CopyFiles@2` | Copia o `.jar` da API para o pacote |
+| `CopyFiles@2` | Copia o `scripts/script-bd.sql` para o pacote |
+| `PublishBuildArtifacts@1` | Publica o artefato **`drop`** (`app/*.jar` + `sql/script-bd.sql`) |
+
+Os testes ficam em `src/test/java`: carga do contexto Spring, ciclo de status da ocorrência e
+validação dos dados de locais seguros e pontos de risco.
+
+### 7.2 Release (CD) — `Refugio360-CD`
+
+Pipeline de Release com **gatilho de implantação contínua**: roda **automaticamente quando o CI
+publica um novo artefato** da `main`. Stage **Produção**:
+
+| Etapa (task) | O que faz |
+|---|---|
+| Azure SQL Database deployment | Executa `sql/script-bd.sql` no Azure SQL (`refugio360`) |
+| Azure App Service deploy | Publica o `.jar` no Web App Linux Java 21 e aplica as App Settings |
+
+### 7.3 Variáveis de ambiente das pipelines
+
+| Variável | Onde | Protegida |
+|---|---|---|
+| `javaHome`, `mavenOpts`, `artifactName`, `jarName` | `azure-pipeline.yml` | não (sem dados sensíveis) |
+| `DATABASE_URL` | Variable Group `refugio360-cloud` | não |
+| `DATABASE_USERNAME`, `DATABASE_PASSWORD` | Variable Group `refugio360-cloud` | **secret** |
+| `JWT_SECRET` | Variable Group `refugio360-cloud` | **secret** |
+| `GESTOR_EMAIL` | Variable Group `refugio360-cloud` | não |
+| `GESTOR_PASSWORD` | Variable Group `refugio360-cloud` | **secret** |
+
+Nenhuma senha está no código: o perfil `cloud` (`application-cloud.properties`) só lê variáveis de ambiente.
+
+---
+
+## 8. CRUD — JSON de cada tabela
+
+Base: `https://refugio360-api-rm562917.azurewebsites.net`.
+O Swagger está em `/swagger-ui/index.html`.
+
+**Autenticação (gestor):** as rotas de escrita de locais seguros e pontos de risco exigem o
+perfil `GESTOR`. O e-mail do gestor é `gestor@refugio360.com`; a senha fica na variável secreta
+`GESTOR_PASSWORD`.
 
 ```http
 POST /api/auth/login
 Content-Type: application/json
 
-{"email":"ana@example.com","senha":"senha-com-8-ou-mais"}
+{ "email": "gestor@refugio360.com", "senha": "<GESTOR_PASSWORD>" }
 ```
 
-A resposta contém `accessToken`, `tokenType`, `expiresAt`, `email`, `papel` e `firebaseUid`. No Swagger, clique em **Authorize** e cole o valor de `accessToken` (sem escrever `Bearer`; o Swagger adiciona o prefixo). O token local expira em uma hora. O gestor de demonstração é criado ao iniciar, com os valores locais da tabela de configuração.
+A resposta traz `accessToken`; envie-o como `Authorization: Bearer <accessToken>`.
+No Swagger, use o botão **Authorize**.
 
-## Perfis e acesso
+### 8.1 `tb_local_seguro` — `/api/locais-seguros`
 
-| Operação | Acesso |
-|---|---|
-| Consultar locais seguros e pontos de risco | Público |
-| Criar, editar e excluir locais seguros e pontos de risco | `GESTOR` |
-| Criar e consultar ocorrências | `CIDADAO` ou `GESTOR` |
-| Editar, excluir ou atualizar status de ocorrência | `GESTOR` |
-| Ver ou gerar orientação de uma ocorrência | Autor da ocorrência ou `GESTOR` |
-| Consultar o próprio perfil (`/api/auth/me`) | Usuário autenticado |
-
-## Endpoints
-
-Todos os `GET` de coleção aceitam paginação Spring Data. Os parâmetros padrão são `page=0` e `size=10`; `page` começa em zero. Use `sort=campo,asc` ou `sort=campo,desc` para ordenar.
-
-| Recurso | Método e rota | Acesso |
-|---|---|---|
-| Autenticação | `POST /api/auth/register` | Público; cria cidadão local |
-| Autenticação | `POST /api/auth/login` | Público; login local |
-| Autenticação | `POST /api/auth/firebase` | Token Firebase válido |
-| Autenticação | `GET /api/auth/me` | Autenticado |
-| Locais seguros | `GET /api/locais-seguros`, `GET /api/locais-seguros/{id}` | Público |
-| Locais seguros | `POST /api/locais-seguros`, `PUT /api/locais-seguros/{id}`, `DELETE /api/locais-seguros/{id}` | `GESTOR` |
-| Ocorrências | `GET /api/ocorrencias`, `GET /api/ocorrencias/{id}`, `POST /api/ocorrencias` | Autenticado |
-| Ocorrências | `GET /api/ocorrencias/minhas` | Autenticado; só as do próprio usuário |
-| Ocorrências | `GET /api/ocorrencias/{id}/orientacoes` | Autor ou `GESTOR` |
-| Ocorrências | `PUT /api/ocorrencias/{id}`, `PATCH /api/ocorrencias/{id}/status`, `DELETE /api/ocorrencias/{id}` | `GESTOR` |
-| Pontos de risco | `GET /api/pontos-risco`, `GET /api/pontos-risco/{id}` | Público |
-| Pontos de risco | `POST /api/pontos-risco`, `PUT /api/pontos-risco/{id}`, `DELETE /api/pontos-risco/{id}` | `GESTOR` |
-| IA | `POST /api/ai/ocorrencias/{id}/orientacao?perfil=IDOSO` | Autor ou `GESTOR` |
-
-### Exemplos de corpos
-
-Criar local seguro (`POST /api/locais-seguros`, gestor):
-
+**Create** — `POST /api/locais-seguros` → `201`
 ```json
 {
   "nome": "Abrigo Central",
@@ -203,12 +249,65 @@ Criar local seguro (`POST /api/locais-seguros`, gestor):
   "endereco": "Rua A, 100",
   "latitude": -23.55,
   "longitude": -46.63,
-  "descricao": "Entrada acessível"
+  "descricao": "Entrada acessivel"
 }
 ```
 
-Registrar ocorrência (`POST /api/ocorrencias`, cidadão ou gestor):
+**Read** — `GET /api/locais-seguros/{id}` → `200` (lista: `GET /api/locais-seguros?page=0&size=10`)
 
+**Update** — `PUT /api/locais-seguros/{id}` → `200`
+```json
+{
+  "nome": "Abrigo Central Atualizado",
+  "tipo": "ABRIGO",
+  "endereco": "Rua A, 100",
+  "latitude": -23.55,
+  "longitude": -46.63,
+  "descricao": "Capacidade 200 pessoas"
+}
+```
+
+**Delete** — `DELETE /api/locais-seguros/{id}` → `204`
+
+**Conferência no banco:**
+```sql
+SELECT id, nome, tipo, endereco, descricao FROM dbo.tb_local_seguro ORDER BY id DESC;
+```
+
+### 8.2 `tb_ponto_risco` — `/api/pontos-risco`
+
+**Create** — `POST /api/pontos-risco` → `201`
+```json
+{
+  "titulo": "Area sujeita a alagamento",
+  "nivelPerigo": "ALTO",
+  "latitude": -23.56,
+  "longitude": -46.64
+}
+```
+
+**Read** — `GET /api/pontos-risco/{id}` → `200`
+
+**Update** — `PUT /api/pontos-risco/{id}` → `200`
+```json
+{
+  "titulo": "Area sujeita a alagamento severo",
+  "nivelPerigo": "CRITICO",
+  "latitude": -23.56,
+  "longitude": -46.64
+}
+```
+
+**Delete** — `DELETE /api/pontos-risco/{id}` → `204`
+
+**Conferência no banco:**
+```sql
+SELECT id, titulo, nivel_perigo, latitude, longitude FROM dbo.tb_ponto_risco ORDER BY id DESC;
+```
+
+### 8.3 `tb_ocorrencia` — `/api/ocorrencias`
+
+**Create** — `POST /api/ocorrencias` (cidadão ou gestor) → `201`
 ```json
 {
   "descricao": "Alagamento na avenida",
@@ -219,110 +318,59 @@ Registrar ocorrência (`POST /api/ocorrencias`, cidadão ou gestor):
 }
 ```
 
-`perfil` é opcional (`GERAL`, `IDOSO`, `PCD` ou `FAMILIA`) e define para quem a orientação automática é escrita.
+**Read** — `GET /api/ocorrencias/{id}` → `200`
 
-Atualizar status (`PATCH /api/ocorrencias/{id}/status`, gestor):
-
+**Update** — `PUT /api/ocorrencias/{id}` (gestor), com o mesmo formato do Create → `200`; ou só o status:
+`PATCH /api/ocorrencias/{id}/status`
 ```json
-{"status":"EM_ANALISE"}
+{ "status": "EM_ANALISE" }
 ```
 
-Criar ponto de risco (`POST /api/pontos-risco`, gestor):
+**Delete** — `DELETE /api/ocorrencias/{id}` (gestor) → `204`
 
-```json
-{
-  "titulo": "Área sujeita a alagamento",
-  "nivelPerigo": "ALTO",
-  "latitude": -23.55,
-  "longitude": -46.63
-}
+**Conferência no banco:**
+```sql
+SELECT id, descricao, urgencia, status, perfil, autor_id FROM dbo.tb_ocorrencia ORDER BY id DESC;
 ```
 
-O status segue um ciclo fixo: `PENDENTE` → `EM_ANALISE` → `RESOLVIDA` (também é possível resolver direto de `PENDENTE`, ou devolver `EM_ANALISE` para `PENDENTE`). Uma ocorrência `RESOLVIDA` não reabre; qualquer outra transição retorna `409`.
+Valores aceitos:
+- **urgência:** `BAIXA`, `MEDIA`, `ALTA`, `CRITICA`;
+- **nível de perigo:** `BAIXO`, `MODERADO`, `ALTO`, `CRITICO`;
+- **perfil:** `GERAL`, `IDOSO`, `PCD`, `FAMILIA`.
 
-Urgências aceitas para ocorrências: `BAIXA`, `MEDIA`, `ALTA` e `CRITICA`. Níveis de perigo aceitos: `BAIXO`, `MODERADO`, `ALTO` e `CRITICO`. Latitude e longitude devem estar dentro dos limites geográficos válidos.
+Para consultar o banco no navegador: Portal Azure → `sql-refugio360-rm562917/refugio360` →
+**Query editor**, entrando com o login do SQL.
 
-## Orientações com IA e RabbitMQ
+---
 
-O cidadão não precisa pedir a orientação: ela é gerada assim que o relato é registrado, sem travar a resposta do app.
+## 9. Executar localmente
 
-```text
-App ──POST /api/ocorrencias──▶ API grava a ocorrência ──(após o commit)──▶ RabbitMQ
-                                                                            │  exchange refugio360.eventos
-                                                                            │  fila refugio360.ocorrencias.orientacao
-                                                                            ▼
-                                     OrientacaoListener ──▶ Spring AI (Gemini) ──▶ grava a Orientacao
-App ──GET /api/ocorrencias/{id}/orientacoes──▶ lê a orientação gerada
+Requisitos: **JDK 21**. Localmente a API usa **H2** em arquivo; não precisa de Azure.
+
+```bash
+./mvnw spring-boot:run              # http://localhost:8080/swagger-ui/index.html
+./mvnw clean package                # o mesmo build e testes do CI
 ```
 
-1. `POST /api/ocorrencias` grava o relato ligado ao autor e devolve `201` na hora.
-2. Depois do commit, a API publica o evento `OcorrenciaRegistrada` no RabbitMQ.
-3. O consumidor (`OrientacaoListener`) chama o Spring AI com o relato, a urgência, o perfil e os três locais seguros mais próximos, e grava o resultado na entidade `Orientacao`.
-4. O app busca a orientação em `GET /api/ocorrencias/{id}/orientacoes`.
+Para rodar localmente contra um SQL Server, use o perfil `cloud`:
 
-`POST /api/ai/ocorrencias/{id}/orientacao?perfil=IDOSO` gera uma nova orientação na hora, por exemplo para outro público. O texto muda conforme o perfil: frases curtas e passos numerados para `IDOSO`, trajetos acessíveis para `PCD` e cuidados com crianças para `FAMILIA`.
-
-Com `GEMINI_API_KEY` configurada, a resposta pode ser gerada pelo Gemini. Sem chave ou se o provedor estiver indisponível, a API retorna uma orientação local e informa `geradoPorIA: false`. A resposta também inclui `locaisConsiderados` com os IDs dos locais usados como contexto. A IA não confirma horário, capacidade ou disponibilidade dos locais; valide essas informações antes do deslocamento.
-
-## Paginação e erros
-
-Exemplo de listagem paginada:
-
-```http
-GET /api/locais-seguros?page=0&size=10&sort=nome,asc
+```bash
+SPRING_PROFILES_ACTIVE=cloud \
+DATABASE_URL='jdbc:sqlserver://localhost:1433;databaseName=refugio360;encrypt=true;trustServerCertificate=true' \
+DATABASE_USERNAME=sa DATABASE_PASSWORD='<senha>' JWT_SECRET='<32+ caracteres>' \
+GESTOR_EMAIL=gestor@refugio360.com GESTOR_PASSWORD='<senha>' ./mvnw spring-boot:run
 ```
 
-As respostas de coleção seguem o formato de página do Spring Data, com conteúdo em `content` e informações como `totalElements`, `totalPages`, `number` e `size`.
+Opcionais: RabbitMQ (`docker compose -f dockerfiles/docker-compose.yml up -d`) para a orientação
+assíncrona; `GEMINI_API_KEY` para gerar as orientações com IA; `FIREBASE_PROJECT_ID` para o login do app.
+Sem eles, a API funciona normalmente com a orientação alternativa local.
 
-Erros são retornados em JSON padronizado. Erro de validação inclui um mapa `fields` com os campos que precisam de correção:
+### Rotas da API
 
-```json
-{
-  "timestamp": "2026-11-11T20:00:00Z",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Revise os campos enviados",
-  "path": "/api/ocorrencias",
-  "fields": {"latitude": "deve ser maior ou igual a -90.0"}
-}
-```
-
-`401` indica token ausente ou inválido; `403` indica perfil sem permissão; `404` indica recurso não encontrado; `409` indica conflito, como e-mail já cadastrado.
-
-## Organização do código
-
-```text
-src/main/java/org/fiap/gs_final/
-  controller/  endpoints REST e contratos HTTP
-  service/     regras de negócio e autenticação
-  repository/  persistência com Spring Data JPA
-  model/       entidades persistidas no H2
-  dto/         contratos de entrada e validações
-  security/    Firebase, JWT local, perfis e CORS
-  exception/   formato global de erros da API
-  ai/          geração de orientações com Spring AI
-  mensageria/  RabbitMQ: evento, publicação e consumidor
-  config/      Swagger/OpenAPI e paginação
-```
-
-## Modelo de dados
-
-| Entidade | Relacionamentos |
-|---|---|
-| `Usuario` | autor de várias `Ocorrencia` |
-| `Ocorrencia` | `@ManyToOne` autor (`Usuario`); `@OneToMany` orientações (removidas junto) |
-| `Orientacao` | `@ManyToOne` ocorrência; `@ManyToMany` locais seguros considerados |
-| `LocalSeguro` | citado por várias `Orientacao` |
-| `PontoRisco` | áreas de risco cadastradas pelo gestor |
-
-## Equipe
-
-- Gabriely Bonfim Silva — RM566242
-- Henrique Rodrigues Vespasiano — RM562917
-- Mirelly Sousa Alves — RM566299
-- Ruan Luca Feliciano — RM562218
-- Murilo Macedo Silva — RM566462
-
-## Tecnologias
-
-Java 21 · Spring Boot 3.4 · Spring Web · Spring Security · Spring Data JPA · H2 · Spring AI · Gemini · RabbitMQ (Spring AMQP) · Docker Compose · Firebase Authentication · Swagger/OpenAPI · Maven
+| Recurso | Rotas | Acesso |
+|---|---|---|
+| Autenticação | `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/firebase`, `GET /api/auth/me` | público / autenticado |
+| Locais seguros | `GET` (público) · `POST`, `PUT`, `DELETE` (`GESTOR`) em `/api/locais-seguros` | |
+| Pontos de risco | `GET` (público) · `POST`, `PUT`, `DELETE` (`GESTOR`) em `/api/pontos-risco` | |
+| Ocorrências | `GET`, `POST` (autenticado) · `PUT`, `PATCH /status`, `DELETE` (`GESTOR`) em `/api/ocorrencias` | |
+| Orientações | `GET /api/ocorrencias/{id}/orientacoes`, `POST /api/ai/ocorrencias/{id}/orientacao` | autor ou `GESTOR` |
