@@ -13,7 +13,7 @@ e **Azure Pipelines** (Build + Release). A infraestrutura é criada por **script
 | **Projeto (privado, Git)** | https://dev.azure.com/gs-the-last-dance/Refugio360 |
 | **Azure Repos** | https://dev.azure.com/gs-the-last-dance/Refugio360/_git/Refugio360 |
 | **API publicada (Swagger)** | https://refugio360-api-rm562917.azurewebsites.net/swagger-ui/index.html |
-| **Vídeo de demonstração** | _adicionar o link do YouTube_ |
+| **Vídeo de demonstração** | link do YouTube no PDF de entrega (`GSTheLastDance_rm562917.pdf`) |
 | **Repositório da API Java (origem)** | https://github.com/Last-Global-Solution/java-refugio360 |
 
 ## Integrantes — GS The Last Dance
@@ -35,6 +35,15 @@ e registra **ocorrências** (alagamento, falta de energia, calor extremo). O ges
 os locais e as áreas de risco e acompanha as ocorrências, que seguem o ciclo
 `PENDENTE → EM_ANALISE → RESOLVIDA`. Para cada ocorrência, a API gera uma **orientação**
 personalizada para o perfil do cidadão (idoso, PCD, família), considerando os locais seguros mais próximos.
+
+**ODS da ONU atendidos (Agenda 2030):**
+
+| ODS | Como o Refúgio 360 contribui |
+|---|---|
+| **11 · Cidades e comunidades sustentáveis** | Mapeia locais seguros e áreas de risco e dá ao gestor público dados para agir no território |
+| **13 · Ação contra a mudança global do clima** | Apoia a população em eventos climáticos extremos (ondas de calor, enchentes) |
+| **3 · Saúde e bem-estar** | Orienta o cidadão até abrigos, UBS e pontos de água durante a crise |
+| **10 · Redução das desigualdades** | Gera orientações adaptadas para idosos, pessoas com deficiência e famílias |
 
 **Por que na nuvem com CI/CD:** a API precisa estar disponível justamente nos momentos de crise.
 Com o Azure Web App e o Azure SQL, ela fica acessível pela internet com HTTPS e banco gerenciado.
@@ -348,9 +357,15 @@ Para consultar o banco no navegador: Portal Azure → `sql-refugio360-rm562917/r
 Requisitos: **JDK 21**. Localmente a API usa **H2** em arquivo; não precisa de Azure.
 
 ```bash
-./mvnw spring-boot:run              # http://localhost:8080/swagger-ui/index.html
 ./mvnw clean package                # o mesmo build e testes do CI
+GESTOR_PASSWORD='<senha>' ./mvnw spring-boot:run   # http://localhost:8080/swagger-ui/index.html
 ```
+
+Nenhuma senha tem valor padrão no código:
+- sem `GESTOR_PASSWORD`, o gestor inicial não é criado;
+- sem `JWT_SECRET`, a API gera uma chave temporária a cada inicialização (só no ambiente local).
+
+Na nuvem, o perfil `cloud` exige todas as variáveis, que vêm do Variable Group secreto.
 
 Para rodar localmente contra um SQL Server, use o perfil `cloud`:
 

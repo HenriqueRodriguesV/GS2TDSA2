@@ -1,4 +1,4 @@
-# RabbitMQ para desenvolvimento local (orientacao assincrona). Painel em http://localhost:15672 (guest/guest).
+# RabbitMQ para desenvolvimento local (orientacao assincrona). Painel em http://localhost:15672.
 # Uso, a partir da raiz: docker compose -f dockerfiles/docker-compose.yml up -d
 services:
   rabbitmq:
