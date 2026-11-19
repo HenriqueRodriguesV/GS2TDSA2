@@ -1,4 +1,5 @@
-# Sobe o RabbitMQ usado pela API. Painel em http://localhost:15672 (guest/guest).
+# RabbitMQ para desenvolvimento local (orientacao assincrona). Painel em http://localhost:15672 (guest/guest).
+# Uso, a partir da raiz: docker compose -f dockerfiles/docker-compose.yml up -d
 services:
   rabbitmq:
     image: rabbitmq:3.13-management
